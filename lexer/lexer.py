@@ -6,7 +6,7 @@ class Position:
         self.text = text
         self.idx = -1
         self.ln = 1
-        self.col = -1
+        self.col = 0
     
     def advance(self, cur_char):
         if cur_char == '\n':
@@ -164,10 +164,10 @@ class Lexer:
                             new_char += escape_chars[self.cur]
                             self.get_next()
                         else:
-                            raise Exception("Expected escape character after '\\'")
+                            raise Exception(f"Expected escape character after ;\\' {self.position}")
                 
                 if not self.cur == '\'':
-                    raise Exception("Expected closing quote")
+                    raise Exception(f"Expected closing quote {self.position}")
                 self.get_next()
 
                 tokens.append(Token('CHAR', new_char, start_pos))
@@ -185,7 +185,7 @@ class Lexer:
                             self.get_next()
                             continue
                         else:
-                            raise Exception("Expected escape character after'\\'")
+                            raise Exception(f"Expected escape character after '\\' {self.position}")
                     new_str += self.cur
                     self.get_next()
                 self.get_next()
@@ -217,7 +217,7 @@ class Lexer:
             elif char in single_operators:
                 tokens.append(Token('OP', char, self.position))
             else:
-                raise Exception("Token not found at " + self.position)
+                raise Exception(f"Token not found {self.position}")
 
             self.get_next()
 
