@@ -70,7 +70,7 @@ class VarAssignNode(AstNode):
 
 class VarAccessNode(AstNode):
     def __init__(self, var_name, position) -> None:
-        super().__init__(True, 'char*')
+        super().__init__(True, None)
         self.var_name = var_name
         self.position = position
 
