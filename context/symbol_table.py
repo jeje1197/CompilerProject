@@ -1,6 +1,7 @@
 class SymbolTable:
     def __init__(self, parent=None) -> None:
         self.symbols = dict()
+        self.parent = parent
 
     def contains_local(self, key):
         return key in self.symbols

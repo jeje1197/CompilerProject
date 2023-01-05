@@ -11,8 +11,16 @@ class TypeSystem:
             'char': ['int'],
         }
 
+        self.auto_cast = {
+            'void': [],
+            'int': ['char', 'float'],
+            'float': [],
+            'char': ['int']
+        }
+
     def add_type(self, new_type):
         self.declared_types[new_type] == []
+        self.auto_cast[new_type] == []
 
     def get_base_type_from_ptr(self, type):
         """
@@ -31,8 +39,8 @@ class TypeSystem:
     def is_pointer_type(self, type):
         return '*' in type
 
-    def type_matches(self, type_a, type_b):
-        return type_a == type_b
+    def type_matches(self, type, desired_type):
+        return type == desired_type or desired_type in self.auto_cast[type]
 
     def type_castable(self, type, desired_type):
         if not self.is_valid_type(desired_type):

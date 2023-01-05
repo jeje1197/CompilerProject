@@ -395,6 +395,9 @@ class Parser:
         elif tok.matches('FLOAT'): # Float
             self.get_next()
             return FloatNode(tok.value, tok.position)
+        elif tok.matches('CHAR'): # Char
+            self.get_next()
+            return CharNode(tok.value, tok.position)
         elif tok.matches('STRING'): # String
             self.get_next()
             return StringNode(tok.value, tok.position)
