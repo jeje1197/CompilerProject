@@ -76,10 +76,9 @@ class VarAccessNode(AstNode):
 
 
 class IfNode(AstNode):
-    def __init__(self, case_conditions, case_statements, else_statements, position) -> None:
+    def __init__(self, case_tuples, else_statements, position) -> None:
         super().__init__(True, None)
-        self.case_conditions = case_conditions
-        self.case_statements = case_statements
+        self.case_tuples = case_tuples
         self.else_statements = else_statements
         self.position = position
 

@@ -127,8 +127,81 @@ class Parser:
             raise Exception('Expected expression after \'=\'')
         return VarAssignNode(var_name, value_node, start_pos)
 
-    def if_statement():
-        pass
+    def if_statement(self):
+        start_pos = self.cur.position
+        self.get_next()
+
+        case_tuples = []
+        else_statements = None
+        if not self.cur.matches('LPAREN'):
+            raise Exception('Expected (')
+        self.get_next()
+
+        cond_node = self.expr()
+        if not cond_node:
+            raise Exception('Expected expression after \'(\'')
+
+        if not self.cur.matches('RPAREN'):
+            raise Exception('Expected )')
+        self.get_next()
+
+        if not self.cur.matches('LBRACE'):
+            raise Exception('Expected {')
+        self.get_next()
+
+        statements = self.statements('RBRACE')
+
+        if not self.cur.matches('RBRACE'):
+            raise Exception('Expected }')
+        self.get_next()
+        case_tuple = (cond_node, statements)
+        case_tuples.append(case_tuple)
+
+        while self.cur.matches('else if'):
+            if not self.cur.matches('LPAREN'):
+                raise Exception('Expected (')
+            self.get_next()
+
+            cond_node = self.expr()
+            if not cond_node:
+                raise Exception('Expected expression after \'(\'')
+
+            if not self.cur.matches('RPAREN'):
+                raise Exception('Expected )')
+            self.get_next()
+
+            if not self.cur.matches('LBRACE'):
+                raise Exception('Expected {')
+            self.get_next()
+
+            statements = self.statements('RBRACE')
+
+            if not self.cur.matches('RBRACE'):
+                raise Exception('Expected }')
+            self.get_next()
+            case_tuple = (cond_node, statements)
+            case_tuples.append(case_tuple)
+
+        if self.cur.matches('else'):
+            self.get_next()
+
+            if not self.cur.matches('LBRACE'):
+                raise Exception('Expected {')
+            self.get_next()
+
+            else_statements = self.statements('RBRACE')
+
+            if not self.cur.matches('RBRACE'):
+                raise Exception('Expected }')
+            self.get_next()
+        return IfNode(case_tuples, else_statements, start_pos)
+
+
+        
+
+
+
+
 
     def while_loop(self):
         start_pos = self.cur.position
