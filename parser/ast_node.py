@@ -92,7 +92,7 @@ class WhileNode(AstNode):
         self.position = position
 
 
-class FunctionNode(AstNode):
+class FunctionDefNode(AstNode):
     def __init__(self, name, args_w_types, return_type, statements, position) -> None:
         super(True, return_type)
         self.name = name
@@ -102,9 +102,38 @@ class FunctionNode(AstNode):
         self.position = position
 
 
+class FunctionCallNode(AstNode):
+    def __init__(self, node_to_call, args, position) -> None:
+        super(True, None)
+        self.node_to_call = node_to_call
+        self.args = args
+        self.position = position
+
+
+class ArrayNode(AstNode):
+    def __init__(self, elements, position) -> None:
+        super(True, None)
+        self.elements = elements
+        self.position = position
+
+class IndexAccessNode(AstNode):
+    def __init__(self, node, index_node, position) -> None:
+        super(True, None)
+        self.node = node
+        self.index_node = index_node
+        self.position = position
+
+
 class StructNode(AstNode):
     def __init__(self, name, statements, position) -> None:
         super(True, None)
         self.name = name
         self.statements = statements
+        self.position = position
+
+class AttributeAccessNode(AstNode):
+    def __init__(self, node, attribute_name, position) -> None:
+        super(True, None)
+        self.node = node
+        self.attribute_name = attribute_name
         self.position = position

@@ -2,9 +2,15 @@
 from lexer.lexer import Lexer
 from parser.parser import Parser
 
-# Main Code
-lexer = Lexer("Console", "1++>=&&||2.8*4%()")
-tokens = lexer.get_tokens()
-print(tokens)
+while True:
+    input = input('Ceroko>')
 
-parser = Parser(tokens)
+    lexer = Lexer("Console", "1++>=&&||2.8*4%()")
+    tokens = lexer.get_tokens()
+    print(tokens)
+
+    parser = Parser(tokens)
+    ast = parser.parse()
+
+    print(ast)
+

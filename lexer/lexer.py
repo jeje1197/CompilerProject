@@ -32,6 +32,19 @@ class Token:
         self.value = value
         self.start_pos = start_pos
 
+    def matches(self, tok_type=None, value=None):
+        if tok_type and type(tok_type) is tuple:
+            return self.type in tok_type
+
+        if not value:
+            return self.type == tok_type
+        else:
+            if type(value) is tuple:
+                return self.value in value
+            return self.value == value
+
+
+
     def __repr__(self) -> str:
         return f"({self.type}, {self.value})"
 
