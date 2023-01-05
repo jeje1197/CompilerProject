@@ -23,6 +23,12 @@ class BinOpNode(AstNode):
         self.right_node = right_node
         self.position = position
 
+class TypeCastNode(AstNode):
+    def __init__(self, node, type, position) -> None:
+        super().__init__(True, type)
+        self.node = node
+        self.position = position
+
 
 class IntNode(AstNode):
     def __init__(self, value, position) -> None:
@@ -82,11 +88,24 @@ class IfNode(AstNode):
         self.else_statements = else_statements
         self.position = position
 
+
 class WhileNode(AstNode):
     def __init__(self, cond_node, statements, position) -> None:
         super().__init__(True, None)
         self.cond_node = cond_node
         self.statements = statements
+        self.position = position
+
+
+class BreakNode(AstNode):
+    def __init__(self, position):
+        super().__init__(False, None)
+        self.position = position
+
+
+class ContinueNode(AstNode):
+    def __init__(self, position):
+        super().__init__(False, None)
         self.position = position
 
 
@@ -105,6 +124,13 @@ class FunctionCallNode(AstNode):
         super().__init__(True, None)
         self.node_to_call = node_to_call
         self.args = args
+        self.position = position
+
+
+class ReturnNode(AstNode):
+    def __init__(self, node, position):
+        super().__init__(False, None)
+        self.node = node
         self.position = position
 
 

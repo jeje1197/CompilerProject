@@ -36,11 +36,8 @@ while True:
     global_symbol_table.set_local('null', 'void')
 
     type_checker = TypeChecker()
-    try:
-        type_checker.visit(ast, global_symbol_table)
-    except Exception as e:
-        print(e)
-        continue
+    type_checker.visit(ast, global_symbol_table)
+
 
     print("Passed")
 

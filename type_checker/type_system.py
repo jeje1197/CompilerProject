@@ -40,13 +40,13 @@ class TypeSystem:
         return '*' in type
 
     def type_matches(self, type, desired_type):
-        return type == desired_type or desired_type in self.auto_cast[type]
+        return type == desired_type or desired_type in self.auto_cast.get(type, ())
 
     def type_castable(self, type, desired_type):
         if not self.is_valid_type(desired_type):
             return False
 
-        cast_list = self.declared_types[type]
+        cast_list = self.declared_types.get(type, ())
         if self.type_matches(type, desired_type):
             return True
         elif self.is_pointer_type(type) and desired_type in ('int', 'void*'):
@@ -55,3 +55,23 @@ class TypeSystem:
             return True
         else:
             return desired_type in cast_list
+
+PLUS = [
+    [],
+]
+
+operation = {
+    '+',
+    '-',
+    '*',
+    '/',
+    '%',
+    '<',
+    '>',
+    '<=',
+    '>=',
+    '==',
+    '!=',
+    '&&',
+    '||'
+}

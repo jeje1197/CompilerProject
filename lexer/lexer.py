@@ -50,7 +50,7 @@ class Token:
 
 
 KEYWORDS = ['var', 'if', 'else if', 'else', 'while', 'fn', 'return',
-        'continue', 'break', 'struct']
+        'continue', 'break', 'struct', 'cast']
 
 escape_chars = {
     '\\': '\\',
@@ -160,11 +160,14 @@ class Lexer:
                 if self.cur and not self.cur == '\'':
                     if self.cur == '\\':
                         self.get_next()
-                        if self.look_ahead() in escape_chars:
+                        if self.cur in escape_chars:
                             new_char += escape_chars[self.cur]
                             self.get_next()
                         else:
                             raise Exception(f"Expected escape character after ;\\' {self.position}")
+                    else:
+                        new_char += self.cur
+                        self.get_next()
                 
                 if not self.cur == '\'':
                     raise Exception(f"Expected closing quote {self.position}")
@@ -172,25 +175,25 @@ class Lexer:
 
                 tokens.append(Token('CHAR', new_char, start_pos))
                 continue
-            elif char in '"':
+            elif char == '"':
                 start_pos = self.position.copy()
                 self.get_next()
                 
                 new_str = ""
-                while self.cur and not self.cur == '"':
+                while not self.cur == '"':
                     if self.cur == '\\':
-                        if self.look_ahead() in escape_chars:
-                            self.get_next()
+                        self.get_next()
+                        if self.cur in escape_chars:
                             new_str += escape_chars[self.cur]
                             self.get_next()
-                            continue
                         else:
                             raise Exception(f"Expected escape character after '\\' {self.position}")
-                    new_str += self.cur
-                    self.get_next()
+                    else:
+                        new_str += self.cur
+                        self.get_next()
                 self.get_next()
-
                 tokens.append(Token('STRING', new_str, start_pos))
+                continue
             elif char == '(':
                 tokens.append(Token('LPAREN', char, self.position))
             elif char == ')':

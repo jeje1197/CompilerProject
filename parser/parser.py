@@ -60,10 +60,17 @@ class Parser:
             return self.if_statement()
         elif self.cur.matches('KEYWORD', 'while'):
             return self.while_loop()
+        elif self.cur.matches('KEYWORD', 'break'):
+            return self.break_statement()
+        elif self.cur.matches('KEYWORD', 'continue'):
+            return self.continue_statement()
         elif self.cur.matches('KEYWORD', 'fn'):
             return self.function_def()
+        elif self.cur.matches('KEYWORD', 'return'):
+            return self.return_statement()
         elif self.cur.matches('KEYWORD', 'struct'):
             return self.struct_def()
+        
         return self.expr()
 
     def read_type(self):
@@ -126,6 +133,23 @@ class Parser:
         if not value_node:
             raise Exception(f'Expected expression after \'=\' {self.cur.position}')
         return VarAssignNode(var_name, value_node, start_pos)
+
+    def type_cast(self):
+        start_pos = self.cur.position
+        self.get_next()
+
+        if not self.cur.matches('COLON'):
+            raise Exception(f'Expected \':\' {self.cur.position}')
+        self.get_next()
+
+        type_name = self.read_type()
+        if not type_name:
+            raise Exception(f'Expected type name {self.cur.position}')
+        
+        node = self.expr()
+        if not node:
+            raise Exception(f'Expected expression after \'=\' {self.cur.position}')
+        return TypeCastNode(node, type_name, start_pos)
 
     def if_statement(self):
         start_pos = self.cur.position
@@ -223,6 +247,16 @@ class Parser:
         self.get_next()
         return WhileNode(cond_node, statements, start_pos)
 
+    def break_statement(self):
+        start_pos = self.cur.position
+        self.get_next()
+        return BreakNode(start_pos)
+
+    def continue_statement(self):
+        start_pos = self.cur.position
+        self.get_next()
+        return ContinueNode(start_pos)
+
     def function_def(self):
         start_pos = self.cur.position
         self.get_next()
@@ -237,8 +271,11 @@ class Parser:
         self.get_next()
 
         args_w_types = []
-        expr_node = self.expr()
-        if expr_node:
+
+        if self.cur.matches('ID'):
+            var_name = self.cur.value
+            self.get_next()
+
             if not self.cur.matches('COLON'):
                 raise Exception(f'Expected \':\' {self.cur.position}')
             self.get_next()
@@ -246,24 +283,25 @@ class Parser:
             type_name = self.read_type()
             if not type_name:
                 raise Exception(f'Expected type name {self.cur.position}')
-            arg_tuple = (expr_node, type_name)
+            arg_tuple = (var_name, type_name)
             args_w_types.append(arg_tuple)
-
         
-        while expr_node and self.cur.matches('COMMA'):
-            self.get_next()
-
-            expr_node = self.expr()
-            if expr_node:
-                if not self.cur.matches('COLON'):
-                    raise Exception(f'Expected \':\' {self.cur.position}')
+            while self.cur.matches('COMMA'):
                 self.get_next()
 
-                type_name = self.read_type()
-                if not type_name:
-                    raise Exception(f'Expected type name {self.cur.position}')
-                arg_tuple = (expr_node, type_name)
-                args_w_types.append(arg_tuple)
+                if self.cur.matches('ID'):
+                    var_name = self.cur.value
+                    self.get_next()
+
+                    if not self.cur.matches('COLON'):
+                        raise Exception(f'Expected \':\' {self.cur.position}')
+                    self.get_next()
+
+                    type_name = self.read_type()
+                    if not type_name:
+                        raise Exception(f'Expected type name {self.cur.position}')
+                    arg_tuple = (var_name, type_name)
+                    args_w_types.append(arg_tuple)
 
         if not self.cur.matches('RPAREN'):
             raise Exception(f'Expected closing \')\' {self.cur.position}')    
@@ -284,9 +322,18 @@ class Parser:
         statements = self.statements('RBRACE')
 
         if not self.cur.matches('RBRACE'):
+            print(self.cur)
             raise Exception(f'Expected {"}"} {self.cur.position}')
         self.get_next()
         return FunctionDefNode(fn_name,  args_w_types, return_type, statements, start_pos)
+
+
+    def return_statement(self):
+        start_pos = self.cur.position
+        self.get_next()
+
+        value_node = self.expr()
+        return ReturnNode(value_node, start_pos)
 
 
     def struct_def(self):
@@ -389,6 +436,8 @@ class Parser:
             if not node:
                 raise Exception(f'Expected expression after \'{tok.value}\' {self.cur.position}')
             return UnaryOpNode(tok.value, node, tok.position)
+        elif tok.matches('KEYWORD', 'cast'):
+            return self.type_cast()
         elif tok.matches('INT'): # Integer
             self.get_next()
             return IntNode(tok.value, tok.position)
@@ -440,5 +489,7 @@ class Parser:
             self.get_next()
 
             right_node = func_2()
+            if not right_node:
+                raise Exception(f'Expected expression after {op_tok.value} {op_tok.position}')
             left_node = BinOpNode(left_node, op_tok.value, right_node, left_node.position)
         return left_node
