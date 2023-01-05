@@ -3,14 +3,30 @@ from lexer.lexer import Lexer
 from parser.parser import Parser
 
 while True:
-    input = input('Ceroko>')
+    user_input = input('Ceroko>')
 
-    lexer = Lexer("Console", "1++>=&&||2.8*4%()")
-    tokens = lexer.get_tokens()
+    if user_input.strip() == '-e':
+        break
+
+    # Lexing
+    lexer = Lexer("Console", user_input)
+    tokens = None
+    try:
+        tokens = lexer.get_tokens()
+    except Exception as e:
+        print(e)
+        continue
     print(tokens)
 
+    # Parsing
     parser = Parser(tokens)
-    ast = parser.parse()
-
+    ast = None
+    try:
+        ast = parser.parse()
+    except Exception as e:
+        print(e)
+        continue
     print(ast)
+
+
 

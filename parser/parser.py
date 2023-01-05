@@ -1,4 +1,4 @@
-from ast_node import *
+from .ast_node import *
 
 class Parser:
     def __init__(self, tokens: list):
@@ -32,8 +32,7 @@ class Parser:
         """
         Returns an AST from a list of tokens
         """
-        ast = self.statements()
-
+        ast = self.statements('EOF')
         if not self.cur.matches('EOF'):
             raise Exception('Did not reach end of file')
         return ast
@@ -42,7 +41,7 @@ class Parser:
         statements_list = []
 
         self.skip_semicolons()
-        while self.cur and not self.matches((end_type, 'EOF')):
+        while self.cur and not self.cur.matches((end_type, 'EOF')):
             node = self.statement()
 
             if node:
@@ -85,11 +84,13 @@ class Parser:
         return type_str
 
     def var_declaration(self):
+        if not self.cur.matches('KEYWORD', 'var'):
+            raise Exception('Expected keyword \'var\'')
         start_pos = self.cur.position
         self.get_next()
 
         if not self.cur.matches('ID'):
-            raise Exception('Expected identifier name')
+            raise Exception(f'Expected identifier name {self.cur.position}')
         var_name = self.cur.value
         self.get_next()
 
@@ -129,23 +130,127 @@ class Parser:
     def if_statement():
         pass
 
-    def while_loop():
-        pass
+    def while_loop(self):
+        start_pos = self.cur.position
+        self.get_next()
 
-    def function_def():
-        pass
+        if not self.cur.matches('LPAREN'):
+            raise Exception('Expected (')
+        self.get_next()
 
-    def struct_def():
-        pass
+        cond_node = self.expr()
+        if not cond_node:
+            raise Exception('Expected expression after \'(\'')
+
+        if not self.cur.matches('RPAREN'):
+            raise Exception('Expected )')
+        self.get_next()
+
+        if not self.cur.matches('LBRACE'):
+            raise Exception('Expected {')
+        self.get_next()
+
+        statements = self.statements('RBRACE')
+
+        if not self.cur.matches('RBRACE'):
+            raise Exception('Expected }')
+        self.get_next()
+        return WhileNode(cond_node, statements, start_pos)
+
+    def function_def(self):
+        start_pos = self.cur.position
+        self.get_next()
+
+        if not self.cur.matches('ID'):
+            raise Exception("Expected function name")
+        fn_name = self.cur.value
+        self.get_next()
+
+        if not self.cur.matches('LPAREN'):
+            raise Exception('Expected (')
+        self.get_next()
+
+        args_w_types = []
+        expr_node = self.expr()
+        if expr_node:
+            if not self.cur.matches('COLON'):
+                raise Exception('Expected \':\'')
+            self.get_next()
+
+            type_name = self.read_type()
+            if not type_name:
+                raise Exception('Expected type name')
+            arg_tuple = (expr_node, type_name)
+            args_w_types.append(arg_tuple)
+
+        
+        while expr_node and self.cur.matches('COMMA'):
+            self.get_next()
+
+            expr_node = self.expr()
+            if expr_node:
+                if not self.cur.matches('COLON'):
+                    raise Exception('Expected \':\'')
+                self.get_next()
+
+                type_name = self.read_type()
+                if not type_name:
+                    raise Exception('Expected type name')
+                arg_tuple = (expr_node, type_name)
+                args_w_types.append(arg_tuple)
+
+        if not self.cur.matches('RPAREN'):
+            raise Exception('Expected closing \')\'')    
+        self.get_next()
+
+        if not self.cur.matches('COLON'):
+            raise Exception('Expected \':\'')
+        self.get_next()
+
+        return_type = self.read_type()
+        if not return_type:
+            raise Exception('Expected type name')
+
+        if not self.cur.matches('LBRACE'):
+            raise Exception('Expected {')
+        self.get_next()
+
+        statements = self.statements('RBRACE')
+
+        if not self.cur.matches('RBRACE'):
+            raise Exception('Expected }')
+        self.get_next()
+        return FunctionDefNode(fn_name,  args_w_types, return_type, statements, start_pos)
+
+
+    def struct_def(self):
+        start_pos = self.cur.position
+        self.get_next()
+
+        if not self.cur.matches('ID'):
+            raise Exception("Expected struct name")
+        struct_name = self.cur.value
+        self.get_next()
+
+        if not self.cur.matches('LBRACE'):
+            raise Exception('Expected {')
+        self.get_next()
+
+        statements = self.statements('RBRACE')
+
+        if not self.cur.matches('RBRACE'):
+            raise Exception('Expected }')
+        self.get_next()
+        return StructNode(struct_name, statements, start_pos)
 
     def expr(self):
-        return self.comp_expr()
+        return self.bin_op(self.comp_expr, ('&&', '||'), self.comp_expr)
 
     def comp_expr(self):
-        return self.bin_op(self.comp_expr2, ('&&', '||'), self.comp_expr2)
+        return self.bin_op(self.comp_expr2, ('<', '>', '<=', '>=', '==', '!=', '%'), self.comp_expr2)
 
     def comp_expr2(self):
-        return self.bin_op(self.term, ('<', '>', '<=', '>=', '==', '!=', '%'), self.term)
+        return self.bin_op(self.term, ('+', '-'), self.term)
 
     def term(self):
         return self.bin_op(self.power, ('*', '/', '%'), self.power)
@@ -156,10 +261,11 @@ class Parser:
     def modifier(self):
         atom_node = self.atom()
 
-        while atom_node and self.cur.matches(('(', '.', '[')):
+        while atom_node and self.cur.matches(('LPAREN', 'DOT', 'RBRACKET')):
             atom_node = self.function_call(atom_node)
             atom_node = self.attribute_access(atom_node)
             atom_node = self.index_access(atom_node)
+        return atom_node
 
     def function_call(self, atom_node):
         if not self.cur.matches('LPAREN'):
@@ -170,12 +276,12 @@ class Parser:
         expr_node = self.expr()
         if expr_node:
             args.append(expr_node)
-        while expr_node and self.cur.matches('COMMA'):
-            self.get_next()
+            while expr_node and self.cur.matches('COMMA'):
+                self.get_next()
 
-            expr_node = self.expr()
-            if expr_node:
-                args.append(expr_node)
+                expr_node = self.expr()
+                if expr_node:
+                    args.append(expr_node)
 
         if not self.cur.matches('RPAREN'):
             raise Exception('Expected closing \')\'')    
@@ -233,7 +339,7 @@ class Parser:
             self.get_next()
             
             expr_node = self.expr()
-            if not node:
+            if not expr_node:
                 raise Exception(f'Expected expression after \'{tok.value}\'')
 
             if not self.cur.matches('RPAREN'):
@@ -260,10 +366,10 @@ class Parser:
     def bin_op(self, func_1, ops, func_2):
         left_node = func_1()
 
-        while self.cur and self.cur in ops:
+        while self.cur and self.cur.matches('OP', ops):
             op_tok = self.cur
             self.get_next()
 
             right_node = func_2()
-            left_node = BinOpNode(left_node, op_tok.value, right_node)
+            left_node = BinOpNode(left_node, op_tok.value, right_node, left_node.position)
         return left_node

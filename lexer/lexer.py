@@ -27,10 +27,10 @@ class Position:
         return f'ln: {self.ln}, col: {self.col}'
 
 class Token:
-    def __init__(self, type, value, start_pos):
+    def __init__(self, type, value, position):
         self.type = type
         self.value = value
-        self.start_pos = start_pos
+        self.position = position
 
     def matches(self, tok_type=None, value=None):
         if tok_type and type(tok_type) is tuple:
@@ -116,16 +116,18 @@ class Lexer:
 
             if char in ' \n': # whitespace
                 self.get_next()
+                continue
             elif next2 == '//': # Comments
                 self.get_next()
             elif char in string.ascii_letters + '_': # id or keyword
                 start_pos = self.position.copy()
                 id_str = ""
                 
-                while self.cur and self.cur in (string.ascii_letters + string.digits + "_"):
+                while self.cur and self.cur in string.ascii_letters + string.digits + "_":
                     id_str += self.cur
                     self.get_next()
                 
+
                 if id_str in KEYWORDS:
                     tokens.append(Token('KEYWORD', id_str, start_pos))
                 else:
