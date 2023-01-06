@@ -155,12 +155,14 @@ class StructNode(AstNode):
         self.statements = statements
         self.position = position
 
+
 class AttributeAccessNode(AstNode):
     def __init__(self, node, attribute_name, position) -> None:
         super().__init__(True, None)
         self.node = node
         self.attribute_name = attribute_name
         self.position = position
+
 
 class AttributeAssignNode(AstNode):
     def __init__(self, node, attribute_name, value_node, position) -> None:

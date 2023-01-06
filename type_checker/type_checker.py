@@ -42,19 +42,7 @@ class TypeChecker:
     def visit_UnaryOpNode(self, node, symbol_table):
         op = node.op
         expr_type = self.visit(node.node, symbol_table)
-        result_type = None
-
-        # if op == '+':
-        #     'int' * expr_type
-        # elif op == '-':
-        #     'int' * expr_type
-        # elif op == '!':
-        #     'int'
-        # elif op == '*':
-        #     expr_type
-        # elif op == '&':
-
-        return result_type
+        return self.type_system.get_type_from_unary_op(expr_type, op)
 
     def visit_BinOpNode(self, node, symbol_table):
         left_type = self.visit(node.left_node, symbol_table)
