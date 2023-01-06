@@ -252,7 +252,13 @@ class TypeChecker:
         return new_metadata_obj
 
     def visit_IndexAccessNode(self, node, symbol_table):
-        pass
+        array_metadata_obj = self.visit(node.node, symbol_table)
+        pointer_type = array_metadata_obj.get_sum_type()
+        if not self.type_system.is_pointer_type(pointer_type):
+            raise Exception(f'Type {pointer_type} is not indexable {node.position}')
+        
+        array_element_type = self.type_system.dereference_pointer_type(pointer_type)
+        return Metadata(array_element_type, None)
     
 
 

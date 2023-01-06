@@ -390,7 +390,7 @@ class Parser:
     def modifier(self):
         atom_node = self.atom()
 
-        while atom_node and self.cur.matches(('LPAREN', 'DOT', 'RBRACKET')):
+        while atom_node and self.cur.matches(('LPAREN', 'DOT', 'LBRACKET')):
             atom_node = self.function_call(atom_node)
             atom_node = self.attribute_assign(atom_node)
             atom_node = self.attribute_access(atom_node)
@@ -426,10 +426,11 @@ class Parser:
 
         index_node = self.expr()
         if not index_node:
-            raise Exception('Expected index')
+            raise Exception(f'Expected index {self.cur.position}')
         
         if not self.cur.matches('RBRACKET'):
             raise Exception(f'Expected \']\' {self.cur.position}')
+        self.get_next()
         return IndexAccessNode(atom_node, index_node, start_pos)
 
     def attribute_access(self, atom_node):

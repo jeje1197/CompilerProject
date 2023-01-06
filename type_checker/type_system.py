@@ -39,6 +39,9 @@ class TypeSystem:
     def is_pointer_type(self, type):
         return '*' in type
 
+    def dereference_pointer_type(self, type):
+        return type[:-1]
+
     def type_matches(self, type, desired_type):
         return type == desired_type or desired_type in self.auto_cast.get(type, ())
 
