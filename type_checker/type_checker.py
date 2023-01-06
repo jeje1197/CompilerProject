@@ -15,7 +15,8 @@ class TypeChecker:
         metadata_list = []
         for statement_node in node:
             metadata_obj = self.visit(statement_node, symbol_table)
-            metadata_list.append(metadata_obj)
+            if type(statement_node).__name__ in ('IfNode', 'WhileNode', 'ReturnNode'):
+                metadata_list.append(metadata_obj)
         return metadata_list
 
     def visit_IntNode(self, node, symbol_table):
@@ -108,9 +109,9 @@ class TypeChecker:
         for metadata_obj in metadata_objs:
             sum_type = metadata_obj.get_sum_type()
             if not sum_type == 'void':
-                if return_type and not return_type == sum_type:
+                if return_type and not self.type_system.type_matches(return_type, sum_type):
                     raise Exception(f'Conflicting return types found in while loop {node.position}')
-                return_metadata = sum_type
+                return_type = sum_type
         return Metadata(return_type if return_type else 'void', None)
 
     def visit_BreakNode(self, node, symbol_table):
@@ -122,6 +123,8 @@ class TypeChecker:
     def visit_FunctionDefNode(self, node, symbol_table):
         if symbol_table.contains_local(node.name):
             raise Exception(f'\'{node.name}\' is already in scope {node.position}')
+        function_def = FunctionDefinition(node.name, node.args_w_types, node.return_type)
+        symbol_table.set_local(node.name, function_def)
 
         if not self.type_system.is_valid_type(node.return_type):
                 raise Exception(f'Invalid return type \'{node.return_type}\' for function \'{node.name}\' {node.position}')
@@ -139,10 +142,13 @@ class TypeChecker:
             
             fn_symbol_table.set_local(arg[0], (arg[1], None))
 
-        for statement in node.statements:
-            self.visit(statement, fn_symbol_table)
-
-        return Metadata(node.return_type, node)
+        declared_type = node.data_type
+        metadata_objs = self.visit(node.statements, symbol_table)
+        for metadata_obj in metadata_objs:
+            metadata_type = metadata_obj.get_sum_type()
+            if not self.type_system.type_matches(metadata_type, declared_type):
+                raise Exception(f'Invalid return type {metadata_type} found in function {node.position}')
+        return Metadata(node.return_type, function_def)
 
     def visit_ReturnNode(self, node, symbol_table):
         if node.node:
@@ -150,7 +156,22 @@ class TypeChecker:
         return Metadata('void', None)
 
     def visit_FunctionCallNode(self, node, symbol_table):
-        return self.visit(node.node_to_call, symbol_table)
+        metadata_obj = self.visit(node.node_to_call, symbol_table)
+        function_def = metadata_obj.get_metadata()
+        if not type(function_def).__name__ == 'FunctionDefinition':
+            raise Exception(f'{metadata_obj.get_sum_type()} is not callable {node.position}')
+
+        num_passed = len(node.args)
+        num_expected = len(function_def.args_w_types)
+        if not num_passed == num_expected:
+            raise Exception(f'Function \'{function_def.name}\' expected {num_expected} args, but received {num_passed} {node.position}')
+
+        for i in range(num_expected):
+            arg_type = self.visit(node.args[i]).get_sum_type()
+            expected_type = function_def.args_w_types[i][1]
+            if not self.type_system.type_matches(arg_type, expected_type):
+                raise Exception(f'Type mismatch arg{i} in \'{function_def.name}\': {expected_type} <- {arg_type} {node.position}')
+        return Metadata(function_def.return_type, None)
 
     
 
