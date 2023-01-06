@@ -86,6 +86,7 @@ class TypeChecker:
         
         metadata = Metadata(declared_type, metadata_obj.get_metadata())
         symbol_table.set_local(node.var_name, metadata)
+        return metadata
 
     def visit_VarAssignNode(self, node, symbol_table):
         if not symbol_table.contains_anywhere(node.var_name):
@@ -100,6 +101,7 @@ class TypeChecker:
         
         new_metadata_obj = Metadata(declared_type, metadata_obj.get_metadata())
         symbol_table.set_in_lowest_scope(node.var_name, new_metadata_obj)
+        return new_metadata_obj
 
     def visit_VarAccessNode(self, node, symbol_table):
         if not symbol_table.contains_anywhere(node.var_name):
@@ -219,7 +221,36 @@ class TypeChecker:
         return Metadata(node.name, struct_def)
         
     def visit_AttributeAccessNode(self, node, symbol_table):
-        pass
+        struct_metadata_obj = self.visit(node.node, symbol_table)
+        struct_def = struct_metadata_obj.get_metadata()
+        if not type(struct_def).__name__ == 'StructDefinition':
+            raise Exception(f'{struct_metadata_obj.get_sum_type()} is not a structure {node.position}')
+
+        attribute_metadata_obj = struct_def.get_field(node.attribute_name)
+        if not attribute_metadata_obj:
+            raise Exception(f'\'{node.attribute_name}\' does not belong to struct \'{struct_def.name}\' {node.position}')
+        return attribute_metadata_obj
+
+    def visit_AttributeAssignNode(self, node, symbol_table):
+        struct_metadata_obj = self.visit(node.node, symbol_table)
+        struct_def = struct_metadata_obj.get_metadata()
+        if not type(struct_def).__name__ == 'StructDefinition':
+            raise Exception(f'{struct_metadata_obj.get_sum_type()} is not a structure {node.position}')
+        
+        attribute_metadata_obj = struct_def.get_field(node.attribute_name)
+        attribute_type = attribute_metadata_obj.get_sum_type()
+        if not attribute_metadata_obj:
+            raise Exception(f'\'{node.attribute_name}\' does not belong to struct \'{struct_def.name}\' {node.position}')
+
+        value_metadata_obj = self.visit(node.value_node, symbol_table)
+        value_type = value_metadata_obj.get_sum_type()
+        if not self.type_system.type_matches(value_type, attribute_type):
+            raise Exception(f'Type mismatch {struct_def.name}.{node.attribute_name}: {attribute_type} <- {value_type} {node.position}')
+
+        new_metadata_obj = Metadata(attribute_type, value_metadata_obj.get_metadata())
+        struct_def.set_field(node.attribute_name, new_metadata_obj)
+        return new_metadata_obj
+
     def visit_IndexAccessNode(self, node, symbol_table):
         pass
     

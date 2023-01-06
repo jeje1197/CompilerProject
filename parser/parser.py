@@ -392,6 +392,7 @@ class Parser:
 
         while atom_node and self.cur.matches(('LPAREN', 'DOT', 'RBRACKET')):
             atom_node = self.function_call(atom_node)
+            atom_node = self.attribute_assign(atom_node)
             atom_node = self.attribute_access(atom_node)
             atom_node = self.index_access(atom_node)
         return atom_node
@@ -441,6 +442,21 @@ class Parser:
         attribute_name = self.cur.value
         self.get_next()
         return AttributeAccessNode(atom_node, attribute_name, atom_node.position)
+
+    def attribute_assign(self, atom_node):
+        if not (self.cur.matches('DOT') and self.look_ahead(1).matches('ID') and
+        self.look_ahead(2).matches('OP', '=')) :
+            return atom_node
+        self.get_next()
+
+        attribute_name = self.cur.value
+        self.get_next()
+        self.get_next()
+
+        value_node = self.expr()
+        if not value_node:
+            raise Exception(f'Expected expression after \'=\' {self.cur.position}')
+        return AttributeAssignNode(atom_node, attribute_name, value_node,atom_node.position)
     
     def atom(self):
         tok = self.cur

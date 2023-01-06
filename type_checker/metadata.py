@@ -20,13 +20,16 @@ class StructDefinition:
         self.name = name
         self.fields = {}
 
-    def add_field(self, field_name, data_type):
+    def add_field(self, field_name, field_metadata):
         if field_name in self.fields:
             return False
-        self.fields[field_name] = data_type
+        self.fields[field_name] = field_metadata
         return True
     
     def get_field(self, field_name):
         return self.fields.get(field_name, None)
+
+    def set_field(self, field_name, field_metadata):
+        self.fields[field_name] = field_metadata
 
     

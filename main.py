@@ -36,15 +36,13 @@ def compile_sc(file_name, source_code):
         return
     print(ast)
     
-    
-
+    # Type Checking
     type_checker = TypeChecker()
-    # try:
     type_checker.run(ast)
 
-
-
     print("Passed")
+
+    # Code Generation
 
 if __name__ == '__main__':
     run()
