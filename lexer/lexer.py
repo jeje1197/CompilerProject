@@ -24,7 +24,7 @@ class Position:
         return pos
 
     def __repr__(self):
-        return f'ln: {self.ln}, col: {self.col}'
+        return f'ln: {self.ln}, col: {self.col} in {self.fn}'
 
 class Token:
     def __init__(self, type, value, position):
