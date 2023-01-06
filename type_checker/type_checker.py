@@ -98,6 +98,9 @@ class TypeChecker:
             raise Exception(f'\'{node.var_name}\' has not been declared {node.position}')
         return symbol_table.get(node.var_name)
 
+    def visit_IfNode(self, node, symbol_table):
+        pass
+
     def visit_WhileNode(self, node, symbol_table):
         cond_metadata = self.visit(node.cond_node, symbol_table)
         cond_node_type = cond_metadata.get_sum_type()
@@ -108,17 +111,17 @@ class TypeChecker:
         return_type = None
         for metadata_obj in metadata_objs:
             sum_type = metadata_obj.get_sum_type()
-            if not sum_type == 'void':
+            if sum_type is not None:
                 if return_type and not self.type_system.type_matches(return_type, sum_type):
                     raise Exception(f'Conflicting return types found in while loop {node.position}')
                 return_type = sum_type
-        return Metadata(return_type if return_type else 'void', None)
+        return Metadata(return_type, None)
 
     def visit_BreakNode(self, node, symbol_table):
-        return Metadata('void', None)
+        return Metadata(None, None)
 
     def visit_ContinueNode(self, node, symbol_table):
-        return Metadata('void', None)
+        return Metadata(None, None)
 
     def visit_FunctionDefNode(self, node, symbol_table):
         if symbol_table.contains_local(node.name):
@@ -147,7 +150,7 @@ class TypeChecker:
         for metadata_obj in metadata_objs:
             metadata_type = metadata_obj.get_sum_type()
             if not self.type_system.type_matches(metadata_type, declared_type):
-                raise Exception(f'Invalid return type {metadata_type} found in function {node.position}')
+                raise Exception(f'Invalid return type {metadata_type} found in function \'{node.name}\': {declared_type} at {node.position}')
         return Metadata(node.return_type, function_def)
 
     def visit_ReturnNode(self, node, symbol_table):
@@ -173,6 +176,12 @@ class TypeChecker:
                 raise Exception(f'Type mismatch arg{i} in \'{function_def.name}\': {expected_type} <- {arg_type} {node.position}')
         return Metadata(function_def.return_type, None)
 
+    def visit_StructDefNode():
+        pass
+    def visit_AttributeAccessNode():
+        pass
+    def visit_IndexAccessNode():
+        pass
     
 
 

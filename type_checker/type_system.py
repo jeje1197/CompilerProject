@@ -12,7 +12,7 @@ class TypeSystem:
         }
 
         self.auto_cast = {
-            'void': ['int', 'char', 'float', 'char*'],
+            'void': [],
             'int': ['char', 'float'],
             'float': [],
             'char': ['int']
