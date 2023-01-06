@@ -99,7 +99,21 @@ class TypeChecker:
         return symbol_table.get(node.var_name)
 
     def visit_IfNode(self, node, symbol_table):
-        pass
+        return_type = None
+        for case in node.case_tuples:
+            cond_metadata_obj = self.visit(case[0], symbol_table)
+            cond_node_type = cond_metadata_obj.get_sum_type()
+            if not self.type_system.type_matches(cond_node_type, 'int'):
+                raise Exception(f'Type mismatch int <- {cond_node_type} in if statement condition {node.position}')
+            
+            metadata_objs = self.visit(case[1], symbol_table)
+            for metadata_obj in metadata_objs:
+                sum_type = metadata_obj.get_sum_type()
+                if sum_type is not None:
+                    if return_type and not self.type_system.type_matches(return_type, sum_type):
+                        raise Exception(f'Conflicting return types found in while loop {node.position}')
+                    return_type = sum_type
+        return Metadata(return_type, None)
 
     def visit_WhileNode(self, node, symbol_table):
         cond_metadata = self.visit(node.cond_node, symbol_table)
@@ -153,6 +167,8 @@ class TypeChecker:
                 raise Exception(f'Invalid return type {metadata_type} found in function \'{node.name}\': {declared_type} at {node.position}')
         return Metadata(node.return_type, function_def)
 
+    # If a return statement is called with no value, declare its type as 'void'
+    # Otherwise substructures without a return statement have a type of None
     def visit_ReturnNode(self, node, symbol_table):
         if node.node:
             return self.visit(node.node, symbol_table)
