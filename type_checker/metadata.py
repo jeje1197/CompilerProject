@@ -16,7 +16,17 @@ class FunctionDefinition:
         self.return_type = return_type
 
 class StructDefinition:
-    def __init__(self, type, fields_w_types) -> None:
-        self.type = type
-        self.fields_w_types = fields_w_types
+    def __init__(self, name) -> None:
+        self.name = name
+        self.fields = {}
+
+    def add_field(self, field_name, data_type):
+        if field_name in self.fields:
+            return False
+        self.fields[field_name] = data_type
+        return True
+    
+    def get_field(self, field_name):
+        return self.fields.get(field_name, None)
+
     

@@ -36,14 +36,11 @@ def compile_sc(file_name, source_code):
         return
     print(ast)
     
-    global_symbol_table = SymbolTable()
-    global_symbol_table.set_local('true', 'int')
-    global_symbol_table.set_local('false', 'int')
-    global_symbol_table.set_local('null', 'void')
+    
 
     type_checker = TypeChecker()
     # try:
-    type_checker.visit(ast, global_symbol_table)
+    type_checker.run(ast)
 
 
 

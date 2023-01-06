@@ -1,10 +1,18 @@
 from .type_system import TypeSystem
 from .metadata import Metadata, FunctionDefinition, StructDefinition
+from context.symbol_table import SymbolTable
 
 must_verify_sub_tree = ['VarDeclarationNode', 'TypeCastNode', 'FunctionDefNode', 'StructNode']
 class TypeChecker:
     def __init__(self) -> None:
         self.type_system = TypeSystem()
+
+    def run(self, ast:list):
+        global_symbol_table = SymbolTable()
+        global_symbol_table.set_local('true', Metadata('int', None))
+        global_symbol_table.set_local('false', Metadata('int', None))
+        global_symbol_table.set_local('null', Metadata('void*', None))
+        self.visit(ast, global_symbol_table)
     
     def visit(self, node, symbol_table):
         method_name = f'visit_{type(node).__name__}'
@@ -141,7 +149,8 @@ class TypeChecker:
         if symbol_table.contains_local(node.name):
             raise Exception(f'\'{node.name}\' is already in scope {node.position}')
         function_def = FunctionDefinition(node.name, node.args_w_types, node.return_type)
-        symbol_table.set_local(node.name, function_def)
+        function_metadata_obj = Metadata('fn', function_def)
+        symbol_table.set_local(node.name, function_metadata_obj)
 
         if not self.type_system.is_valid_type(node.return_type):
                 raise Exception(f'Invalid return type \'{node.return_type}\' for function \'{node.name}\' {node.position}')
@@ -165,7 +174,7 @@ class TypeChecker:
             metadata_type = metadata_obj.get_sum_type()
             if not self.type_system.type_matches(metadata_type, declared_type):
                 raise Exception(f'Invalid return type {metadata_type} found in function \'{node.name}\': {declared_type} at {node.position}')
-        return Metadata(node.return_type, function_def)
+        return function_metadata_obj
 
     # If a return statement is called with no value, declare its type as 'void'
     # Otherwise substructures without a return statement have a type of None
@@ -192,11 +201,26 @@ class TypeChecker:
                 raise Exception(f'Type mismatch arg{i} in \'{function_def.name}\': {expected_type} <- {arg_type} {node.position}')
         return Metadata(function_def.return_type, None)
 
-    def visit_StructDefNode():
+    def visit_StructNode(self, node, symbol_table):
+        if symbol_table.contains_local(node.name):
+            raise Exception(f'\'{node.name}\' is already in scope {node.position}')
+        struct_def = StructDefinition(node.name)
+        struct_metadata_obj = Metadata(node.name, struct_def)
+        symbol_table.set_local(node.name, struct_metadata_obj)
+
+        for statement in node.statements:
+            if type(statement).__name__ == 'VarDeclarationNode':
+                metadata_obj = self.visit(statement, symbol_table)
+                field_name = statement.var_name
+                if not struct_def.add_field(field_name, metadata_obj):
+                    raise Exception(f'Structure already contains a \'{field_name}\' field {statement.position}')
+            else:
+                raise Exception(f'{type(statement).__name__} cannot exist within a structure {statement.position}')
+        return Metadata(node.name, struct_def)
+        
+    def visit_AttributeAccessNode(self, node, symbol_table):
         pass
-    def visit_AttributeAccessNode():
-        pass
-    def visit_IndexAccessNode():
+    def visit_IndexAccessNode(self, node, symbol_table):
         pass
     
 
