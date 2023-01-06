@@ -49,7 +49,10 @@ class TypeChecker:
         op = node.op
         right_type = self.visit(node.right_node, symbol_table)
 
-        return
+        result_type = self.type_system.get_type_from_bin_op(left_type, op, right_type)
+        if not result_type:
+            raise Exception(f'Invalid operation between types: {left_type} {op} {right_type} {node.position}')
+        return Metadata(result_type, None)
             
     def visit_TypeCastNode(self, node, symbol_table):
         original_metadata_obj = self.visit(node.node, symbol_table)
@@ -247,10 +250,3 @@ class TypeChecker:
         
         array_element_type = self.type_system.dereference_pointer_type(pointer_type)
         return Metadata(array_element_type, None)
-    
-
-
-        
-
-
-    
