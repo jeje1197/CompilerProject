@@ -4,20 +4,26 @@ from parser.parser import Parser
 from context.symbol_table import SymbolTable
 from type_checker.type_checker import TypeChecker
 
-while True:
-    user_input = input('Ceroko>')
+def run():
+    while True:
+        user_input = input('Ceroko>')
+        command = user_input.strip()
 
-    if user_input.strip() == '-e':
-        break
+        if user_input.strip() == '-e':
+            break
 
+        compile_sc('Console', user_input)
+
+# def get_file_text(file_name):
+def compile_sc(file_name, source_code):
     # Lexing
-    lexer = Lexer("Console", user_input)
+    lexer = Lexer(file_name, source_code)
     tokens = None
     try:
         tokens = lexer.get_tokens()
     except Exception as e:
         print(e)
-        continue
+        return
     print(tokens)
 
     # Parsing
@@ -27,7 +33,7 @@ while True:
         ast = parser.parse()
     except Exception as e:
         print(e)
-        continue
+        return
     print(ast)
     
     global_symbol_table = SymbolTable()
@@ -36,8 +42,12 @@ while True:
     global_symbol_table.set_local('null', 'void')
 
     type_checker = TypeChecker()
+    # try:
     type_checker.visit(ast, global_symbol_table)
+
 
 
     print("Passed")
 
+if __name__ == '__main__':
+    run()

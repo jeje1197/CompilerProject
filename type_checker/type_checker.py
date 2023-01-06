@@ -12,8 +12,11 @@ class TypeChecker:
         return method(node, symbol_table)
 
     def visit_list(self, node, symbol_table):
+        metadata_list = []
         for statement_node in node:
-            self.visit(statement_node, symbol_table)
+            metadata_obj = self.visit(statement_node, symbol_table)
+            metadata_list.append(metadata_obj)
+        return metadata_list
 
     def visit_IntNode(self, node, symbol_table):
         return Metadata('int', None)
@@ -76,7 +79,7 @@ class TypeChecker:
         symbol_table.set_local(node.var_name, metadata)
 
     def visit_VarAssignNode(self, node, symbol_table):
-        if not symbol_table.contains_local(node.var_name):
+        if not symbol_table.contains_anywhere(node.var_name):
             raise Exception(f'\'{node.var_name}\' has not been declared {node.position}')
 
         declared_type = symbol_table.get(node.var_name).get_sum_type()
@@ -95,17 +98,26 @@ class TypeChecker:
         return symbol_table.get(node.var_name)
 
     def visit_WhileNode(self, node, symbol_table):
-        cond_node_type = self.visit(node.cond_node, symbol_table)[0]
+        cond_metadata = self.visit(node.cond_node, symbol_table)
+        cond_node_type = cond_metadata.get_sum_type()
         if not self.type_system.type_matches(cond_node_type, 'int'):
-            raise Exception(f'Type mismatch {cond_node_type} <- int {node.position}')
-        propagated_type = self.visit(node.statements)
-        node.data_type = propagated_type
+            raise Exception(f'Type mismatch int <- {cond_node_type} {node.position}')
+        metadata_objs = self.visit(node.statements, symbol_table)
+
+        return_type = None
+        for metadata_obj in metadata_objs:
+            sum_type = metadata_obj.get_sum_type()
+            if not sum_type == 'void':
+                if return_type and not return_type == sum_type:
+                    raise Exception(f'Conflicting return types found in while loop {node.position}')
+                return_metadata = sum_type
+        return Metadata(return_type if return_type else 'void', None)
 
     def visit_BreakNode(self, node, symbol_table):
-        return ('void', node)
+        return Metadata('void', None)
 
     def visit_ContinueNode(self, node, symbol_table):
-        return ('void', node)
+        return Metadata('void', None)
 
     def visit_FunctionDefNode(self, node, symbol_table):
         if symbol_table.contains_local(node.name):
@@ -130,11 +142,12 @@ class TypeChecker:
         for statement in node.statements:
             self.visit(statement, fn_symbol_table)
 
-        return (node.return_type, node)
+        return Metadata(node.return_type, node)
 
     def visit_ReturnNode(self, node, symbol_table):
-        return (self.visit(node.node, symbol_table)[0] if node.node else 'void', node.node)
-
+        if node.node:
+            return self.visit(node.node, symbol_table)
+        return Metadata('void', None)
 
     def visit_FunctionCallNode(self, node, symbol_table):
         return self.visit(node.node_to_call, symbol_table)

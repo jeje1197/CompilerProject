@@ -7,6 +7,10 @@ class Parser:
         self.cur = None
         self.get_next()
 
+        self.in_function = 0
+        self.in_loop = 0
+        self.in_structure = 0
+
     def has_next(self, steps_ahead=1):
         return self.index + steps_ahead < len(self.tokens)
 
@@ -60,13 +64,13 @@ class Parser:
             return self.if_statement()
         elif self.cur.matches('KEYWORD', 'while'):
             return self.while_loop()
-        elif self.cur.matches('KEYWORD', 'break'):
+        elif self.in_loop and self.cur.matches('KEYWORD', 'break'):
             return self.break_statement()
-        elif self.cur.matches('KEYWORD', 'continue'):
+        elif self.in_loop and self.cur.matches('KEYWORD', 'continue'):
             return self.continue_statement()
         elif self.cur.matches('KEYWORD', 'fn'):
             return self.function_def()
-        elif self.cur.matches('KEYWORD', 'return'):
+        elif self.in_function and self.cur.matches('KEYWORD', 'return'):
             return self.return_statement()
         elif self.cur.matches('KEYWORD', 'struct'):
             return self.struct_def()
@@ -240,7 +244,10 @@ class Parser:
             raise Exception(f'Expected {"{"} {self.cur.position}')
         self.get_next()
 
+
+        self.in_loop += 1
         statements = self.statements('RBRACE')
+        self.in_loop -= 1
 
         if not self.cur.matches('RBRACE'):
             raise Exception(f'Expected {"}"} {self.cur.position}')
@@ -319,7 +326,16 @@ class Parser:
             raise Exception(f'Expected {"{"} {self.cur.position}')
         self.get_next()
 
+        # Temporarily remove scoping of loop inside of function and save it in a variable
+        saved_loop_nesting = self.in_loop
+        self.in_loop = 0
+    
+        self.in_function += 1
         statements = self.statements('RBRACE')
+        self.in_function -= 1
+
+        # Restore loop scoping outside of function
+        self.in_loop = saved_loop_nesting
 
         if not self.cur.matches('RBRACE'):
             print(self.cur)
