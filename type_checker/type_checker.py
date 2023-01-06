@@ -41,13 +41,21 @@ class TypeChecker:
 
     def visit_UnaryOpNode(self, node, symbol_table):
         op = node.op
-        expr_type = self.visit(node.node, symbol_table)
-        return self.type_system.get_type_from_unary_op(expr_type, op)
+        metadata_obj = self.visit(node.node, symbol_table)
+        expr_type = metadata_obj.get_sum_type()
+
+        result_type = self.type_system.get_type_from_unary_op(expr_type, op)
+        if not result_type:
+            raise Exception(f'Invalid operation between types: {op} {expr_type} {node.position}')
+        return Metadata(result_type, None)
 
     def visit_BinOpNode(self, node, symbol_table):
-        left_type = self.visit(node.left_node, symbol_table)
+        left_metadata_obj = self.visit(node.left_node, symbol_table)
         op = node.op
-        right_type = self.visit(node.right_node, symbol_table)
+        right_metadata_obj = self.visit(node.right_node, symbol_table)
+
+        left_type = left_metadata_obj.get_sum_type()
+        right_type = right_metadata_obj.get_sum_type()
 
         result_type = self.type_system.get_type_from_bin_op(left_type, op, right_type)
         if not result_type:

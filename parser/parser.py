@@ -338,7 +338,6 @@ class Parser:
         self.in_loop = saved_loop_nesting
 
         if not self.cur.matches('RBRACE'):
-            print(self.cur)
             raise Exception(f'Expected {"}"} {self.cur.position}')
         self.get_next()
         return FunctionDefNode(fn_name,  args_w_types, return_type, statements, start_pos)

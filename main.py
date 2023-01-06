@@ -39,7 +39,6 @@ def compile_sc(file_name, source_code):
     # Type Checking
     type_checker = TypeChecker()
     type_checker.run(ast)
-
     print("Passed")
 
     # Code Generation
