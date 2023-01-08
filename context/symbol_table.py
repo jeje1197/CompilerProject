@@ -3,6 +3,26 @@ class SymbolTable:
         self.symbols = dict()
         self.parent = parent
 
+    def begin_scope(self, asm_text: list[str]):
+        asm_text.extend([
+            '# Begin new scope',
+            'move $fp, $sp',
+            ''
+        ])
+
+    def end_scope(self, asm_text: list[str]):
+        asm_text.extend([
+            '# End scope',
+            f'addiu $sp, $sp, {self.get_num_variables() * 4}',
+            ''
+        ])
+
+    def get_num_variables(self):
+        return len(self.symbols)
+
+    def get_variable_offset(self):
+        return len(self.symbols) * 4
+
     def contains_local(self, key):
         return key in self.symbols
 

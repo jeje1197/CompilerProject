@@ -1,8 +1,8 @@
 from .type_system import TypeSystem
 from .metadata import Metadata, FunctionDefinition, StructDefinition
 from context.symbol_table import SymbolTable
+from .built_in_functions import list_of_fn
 
-must_verify_sub_tree = ['VarDeclarationNode', 'TypeCastNode', 'FunctionDefNode', 'StructNode']
 class TypeChecker:
     def __init__(self) -> None:
         self.type_system = TypeSystem()
@@ -12,6 +12,9 @@ class TypeChecker:
         global_symbol_table.set_local('true', Metadata('int', None))
         global_symbol_table.set_local('false', Metadata('int', None))
         global_symbol_table.set_local('null', Metadata('void*', None))
+
+        for fn in list_of_fn:
+            global_symbol_table.set_local(fn[0], Metadata(fn[1].return_type, fn[1]))
         self.visit(ast, global_symbol_table)
     
     def visit(self, node, symbol_table):
@@ -31,10 +34,11 @@ class TypeChecker:
         return Metadata('int', None)
 
     def visit_FloatNode(self, node, symbol_table):
+        raise Exception('Compiler does not support floating type numbers')
         return Metadata('float', None)
 
     def visit_CharNode(self, node, symbol_table):
-        return Metadata('char', None)
+        return Metadata('int', None)
 
     def visit_StringNode(self, node, symbol_table):
         return Metadata('char*', None)
@@ -79,6 +83,9 @@ class TypeChecker:
 
         if symbol_table.contains_local(node.var_name):
             raise Exception(f'\'{node.var_name}\' is already in scope {node.position}')
+
+        if not self.type_system.is_valid_type(declared_type):
+            raise Exception(f'Invalid type \'{declared_type}\' {node.position}')
 
         if not self.type_system.type_matches(value_type, declared_type):
             raise Exception(f'Type mismatch {declared_type} <- {value_type} {node.position}')
@@ -154,7 +161,7 @@ class TypeChecker:
         symbol_table.set_local(node.name, function_metadata_obj)
 
         if not self.type_system.is_valid_type(node.return_type):
-                raise Exception(f'Invalid return type \'{node.return_type}\' for function \'{node.name}\' {node.position}')
+            raise Exception(f'Invalid return type \'{node.return_type}\' for function \'{node.name}\' {node.position}')
         
         fn_symbol_table = symbol_table.generate_sub_context()
         arg_names_seen = set()
@@ -187,6 +194,10 @@ class TypeChecker:
     def visit_FunctionCallNode(self, node, symbol_table):
         metadata_obj = self.visit(node.node_to_call, symbol_table)
         function_def = metadata_obj.get_metadata()
+
+        if type(function_def).__name__ == 'StructDefinition':
+            struct_def = function_def
+            return Metadata(struct_def.name, struct_def.create_struct())
         if not type(function_def).__name__ == 'FunctionDefinition':
             raise Exception(f'{metadata_obj.get_sum_type()} is not callable {node.position}')
 
@@ -196,7 +207,7 @@ class TypeChecker:
             raise Exception(f'Function \'{function_def.name}\' expected {num_expected} args, but received {num_passed} {node.position}')
 
         for i in range(num_expected):
-            arg_type = self.visit(node.args[i]).get_sum_type()
+            arg_type = self.visit(node.args[i], symbol_table).get_sum_type()
             expected_type = function_def.args_w_types[i][1]
             if not self.type_system.type_matches(arg_type, expected_type):
                 raise Exception(f'Type mismatch arg{i} in \'{function_def.name}\': {expected_type} <- {arg_type} {node.position}')
@@ -222,7 +233,7 @@ class TypeChecker:
     def visit_AttributeAccessNode(self, node, symbol_table):
         struct_metadata_obj = self.visit(node.node, symbol_table)
         struct_def = struct_metadata_obj.get_metadata()
-        if not type(struct_def).__name__ == 'StructDefinition':
+        if not type(struct_def).__name__ in ('StructDefinition', 'StructObject'):
             raise Exception(f'{struct_metadata_obj.get_sum_type()} is not a structure {node.position}')
 
         attribute_metadata_obj = struct_def.get_field(node.attribute_name)
@@ -233,7 +244,7 @@ class TypeChecker:
     def visit_AttributeAssignNode(self, node, symbol_table):
         struct_metadata_obj = self.visit(node.node, symbol_table)
         struct_def = struct_metadata_obj.get_metadata()
-        if not type(struct_def).__name__ == 'StructDefinition':
+        if not type(struct_def).__name__ in ('StructDefinition', 'StructObject'):
             raise Exception(f'{struct_metadata_obj.get_sum_type()} is not a structure {node.position}')
         
         attribute_metadata_obj = struct_def.get_field(node.attribute_name)

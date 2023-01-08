@@ -2,6 +2,7 @@ class AstNode:
     def __init__(self, is_expr=False, data_type=None):
         self.is_expr = is_expr
         self.data_type = data_type
+        self.cast_info = [None, None]
 
     def __repr__(self) -> str:
         return f'(AstNode {type(self).__name__}: is_expr: {self.is_expr} data_type: {self.data_type}'

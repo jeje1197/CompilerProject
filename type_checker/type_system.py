@@ -8,14 +8,14 @@ class TypeSystem:
             'void': [],
             'int': ['char', 'float'],
             'float': ['int'],
-            'char': ['int'],
+            # 'char': ['int'],
         }
 
         self.auto_cast = {
             'void': [],
             'int': ['char', 'float'],
             'float': [],
-            'char': ['int']
+            # 'char': ['int']
         }
 
     def add_type(self, new_type):
@@ -55,7 +55,7 @@ class TypeSystem:
         cast_list = self.declared_types.get(type, ())
         if self.type_matches(type, desired_type):
             return True
-        elif self.is_pointer_type(type) and desired_type in ('int', 'void*'):
+        elif (self.is_pointer_type(type) or type == 'int') and desired_type in ('int', 'void*'):
             return True
         elif type == 'void*' and self.is_pointer_type(desired_type):
             return True

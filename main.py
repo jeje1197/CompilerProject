@@ -16,9 +16,8 @@ def run():
 
         compile_sc('Console', user_input)
 
-# def get_file_text(file_name):
 def compile_sc(file_name, source_code):
-    print('Parsing...')
+    # print('Parsing...')
 
     # Lexing
     lexer = Lexer(file_name, source_code)
@@ -28,7 +27,7 @@ def compile_sc(file_name, source_code):
     except Exception as e:
         print(e)
         return
-    print(tokens)
+    # print(tokens)
 
     # Parsing
     parser = Parser(tokens)
@@ -38,21 +37,19 @@ def compile_sc(file_name, source_code):
     except Exception as e:
         print(e)
         return
-    print(ast)
+    # print(ast)
     
     # Type Checking
     print('Validating program')
     type_checker = TypeChecker()
-    try:
-        type_checker.run(ast)
-    except Exception as e:
-        print(e)
-        return
+    type_checker.run(ast)
+   
+       
 
     # Code Generation
     print('Generating Code')
     code_generator = CodeGenerator()
-    target_code = code_generator.generate_code()
+    target_code = code_generator.generate_code(ast)
     generate_file('test.spm', target_code)
 
 def generate_file(file_name, target_code):

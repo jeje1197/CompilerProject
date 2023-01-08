@@ -32,4 +32,12 @@ class StructDefinition:
     def set_field(self, field_name, field_metadata):
         self.fields[field_name] = field_metadata
 
+    def create_struct(self):
+        return StructObject(self.name, self.fields)
+
+class StructObject:
+    def __init__(self, name, fields:dict) -> None:
+        self.name = name
+        self.fields = fields.copy()
+
     
