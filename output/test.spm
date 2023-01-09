@@ -7,25 +7,23 @@
 move $fp, $sp
 
 # Push int to stack
-li $a0, 97
+li $a0, 6
 sw $a0, 0($sp)
 addiu $sp, $sp, -4
-
-# Get variable from reference
-lw $a0, -0($fp)
-sw $a0, 0($sp)addiu $sp, $sp, -4
 
 # Push int to stack
-li $a0, 3
+li $a0, 5
 sw $a0, 0($sp)
 addiu $sp, $sp, -4
 
-# Addition on top two from stack  -> result stored on top of stack
-la $t0, add_int
+# Modulo on top two from stack -> result stored on top of stack
+la $t0, mod_int
 jalr $a0, $t0
+# End scope
+addiu $sp, $sp, 16
+
 li $v0, 10
 syscall
-
 add_int:
 	# Store ret addr on top of args on stack
 	# Stack ( a, b, ra)
@@ -57,7 +55,6 @@ add_int:
 	# Jump to ret addr
 	jr $t0
 
-
 sub_int:
 	# Store ret addr on top of args on stack
 	# Stack ( a, b, ra)
@@ -88,7 +85,6 @@ sub_int:
 	
 	# Jump to ret addr
 	jr $t0
-
 
 mul_int:
 	# Store ret addr on top of args on stack
@@ -122,7 +118,6 @@ mul_int:
 	# Jump to ret addr
 	jr $t0
 
-
 div_int:
 	# Store ret addr on top of args on stack
 	# Stack ( a, b, ra)
@@ -152,5 +147,67 @@ div_int:
 	sw $a0, 0($sp)
 	addiu $sp, $sp, -4
 	
+	# Jump to ret addr
+	jr $t0
+
+mod_int:
+	# Store ret addr on top of args on stack
+	# Stack ( a, b, ra)
+	sw $a0, 0($sp)
+	addiu $sp, $sp, -4
+
+	# Get two values from stack in $a0, $t0
+	# Stack (a, b, ra)top
+	#        ^  ^
+	#       12  8  4  0
+	lw  $a0, 12($sp)
+	lw  $t0, 8($sp)
+	
+	# Mod two values and store result in $a0
+	div $a0, $a0, $t0
+    mfhi $a0
+	
+	# Pop ret addr into reg $t0
+	lw $t0, 4($sp)
+	
+	# Clear stack
+	# Stack ()
+	addiu $sp, $sp, 12
+	
+	# Place result on top of stack
+	# Stack (res)
+	sw $a0, 0($sp)
+	addiu $sp, $sp, -4
+	
+	# Jump to ret addr
+	jr $t0
+
+print_int:
+	# Print integer from top of stack
+	li $v0, 1
+    lw $a0, 4($sp)
+	addiu $sp, $sp, 4
+    syscall
+
+	# Jump to ret addr
+	jr $t0
+
+print_char:
+	# Print character from top of stack
+	li $v0, 11
+    lw $a0, 4($sp)
+	addiu $sp, $sp, 4
+    syscall
+
+	# Jump to ret addr
+	jr $t0
+
+print_string:
+	# Print string from address on top of stack
+	li $v0, 11
+    lw $a0, 4($sp)
+	addiu $sp, $sp, 4
+    syscall
+
 	# Jump to ret addr
 	jr $t0

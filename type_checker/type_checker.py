@@ -1,7 +1,7 @@
 from .type_system import TypeSystem
 from .metadata import Metadata, FunctionDefinition, StructDefinition
 from context.symbol_table import SymbolTable
-from .built_in_functions import list_of_fn
+from .built_in_functions import add_metadata_to_symbol_table
 
 class TypeChecker:
     def __init__(self) -> None:
@@ -13,8 +13,7 @@ class TypeChecker:
         global_symbol_table.set_local('false', Metadata('int', None))
         global_symbol_table.set_local('null', Metadata('void*', None))
 
-        for fn in list_of_fn:
-            global_symbol_table.set_local(fn[0], Metadata(fn[1].return_type, fn[1]))
+        add_metadata_to_symbol_table(global_symbol_table)
         self.visit(ast, global_symbol_table)
     
     def visit(self, node, symbol_table):

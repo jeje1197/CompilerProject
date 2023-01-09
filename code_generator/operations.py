@@ -44,13 +44,8 @@ def gen_div_int(asm_text:list[str]):
 def gen_mod_int(asm_text:list[str]):
     asm_text.extend([
         '# Modulo on top two from stack -> result stored on top of stack',
-        'lw $a0, 8($sp)',
-        'lw $t0, 4($sp)',
-        'addiu $sp, $sp, 8',
-        'div $a0, $a0, $t0',
-        'mfhi $a0',
-        'sw $a0, 0($sp)',
-        'addiu $sp, $sp, -4',
+        'la $t0, mod_int',
+        'jalr $a0, $t0'
         ''
     ])
 
@@ -84,29 +79,22 @@ def gen_gt_int(asm_text:list[str]):
 # Print
 def gen_print_int(asm_text:list[str]):
     asm_text.extend([
-        '# Print integer from top of stack',
-        'li $v0, 1'
-        'lw $a0, 4($sp)',
-        'addiu $sp, $sp, 4',
-        'syscall',
+        'la $t0, print_int',
+        'jalr $a0, $t0'
         ''
     ])
 
 def gen_print_char(asm_text:list[str]):
     asm_text.extend([
-        '# Print char from top of stack',
-        'li $v0, 11'
-        'lw $a0, 4($sp)',
-        'addiu $sp, $sp, 4',
-        'syscall',
+        'la $t0, print_char',
+        'jalr $a0, $t0'
         ''
     ])
 
 def gen_print_string(asm_text:list[str]):
     asm_text.extend([
-        '# Print string from address on top of stack',
-        'li $v0, 4'
-        'lw $a0, 4($sp)',
-        'addiu $sp, $sp, 4',
-        'syscall',
+        'la $t0, print_string',
+        'jalr $a0, $t0'
+        ''
     ])
+
