@@ -161,12 +161,12 @@ class Lexer:
                     if self.cur == '\\':
                         self.get_next()
                         if self.cur in escape_chars:
-                            new_char += escape_chars[self.cur]
+                            new_char = escape_chars[self.cur]
                             self.get_next()
                         else:
                             raise Exception(f"Expected escape character after ;\\' {self.position}")
                     else:
-                        new_char += self.cur
+                        new_char = self.cur
                         self.get_next()
                 
                 if not self.cur == '\'':

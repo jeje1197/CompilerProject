@@ -7,20 +7,14 @@
 move $fp, $sp
 
 # Push int to stack
-li $a0, 6
+li $a0, 97
 sw $a0, 0($sp)
 addiu $sp, $sp, -4
 
-# Push int to stack
-li $a0, 5
-sw $a0, 0($sp)
-addiu $sp, $sp, -4
-
-# Modulo on top two from stack -> result stored on top of stack
-la $t0, mod_int
+la $t0, print_int
 jalr $a0, $t0
 # End scope
-addiu $sp, $sp, 16
+addiu $sp, $sp, 0
 
 li $v0, 10
 syscall
@@ -183,31 +177,57 @@ mod_int:
 	jr $t0
 
 print_int:
+	# Store ret addr on top of args on stack
+	# Stack (a, ra)
+	sw $a0, 0($sp)
+	addiu $sp, $sp, -4
+
 	# Print integer from top of stack
 	li $v0, 1
-    lw $a0, 4($sp)
-	addiu $sp, $sp, 4
+    lw $a0, 8($sp)
     syscall
+
+	# Pop ret addr into reg $t0
+	lw $t0, 4($sp)
+	addiu $sp, $sp, 8
 
 	# Jump to ret addr
 	jr $t0
 
 print_char:
 	# Print character from top of stack
+	# Store ret addr on top of args on stack
+	# Stack (a, ra)
+	sw $a0, 0($sp)
+	addiu $sp, $sp, -4
+
+	# Print char from top of stack
 	li $v0, 11
-    lw $a0, 4($sp)
-	addiu $sp, $sp, 4
+    lw $a0, 8($sp)
     syscall
+
+	# Pop ret addr into reg $t0
+	lw $t0, 4($sp)
+	addiu $sp, $sp, 8
 
 	# Jump to ret addr
 	jr $t0
 
 print_string:
 	# Print string from address on top of stack
-	li $v0, 11
-    lw $a0, 4($sp)
-	addiu $sp, $sp, 4
+	# Store ret addr on top of args on stack
+	# Stack (a, ra)
+	sw $a0, 0($sp)
+	addiu $sp, $sp, -4
+
+	# Print string from address on top of stack
+	li $v0, 4
+    lw $a0, 8($sp)
     syscall
+
+	# Pop ret addr into reg $t0
+	lw $t0, 4($sp)
+	addiu $sp, $sp, 8
 
 	# Jump to ret addr
 	jr $t0

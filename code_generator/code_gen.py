@@ -49,10 +49,10 @@ class CodeGenerator:
         gen_push_int(self.asm_text, node.value)
 
     def visit_CharNode(self, node, symbol_table):
-        gen_push_int(self.asm_text, int(node.value))
+        gen_push_int(self.asm_text, ord(node.value))
 
     def visit_StringNode(self, node, symbol_table):
-        gen_push_str(self.asm_data, node.value)
+        gen_push_string(self.asm_data, node.value)
 
     def visit_UnaryOpNode(self, node, symbol_table):
         op = node.op
@@ -137,12 +137,20 @@ class CodeGenerator:
 
     def visit_FunctionCallNode(self, node, symbol_table):
         function_def = self.visit(node.node_to_call, symbol_table)
+
+        # Load args into scope
+        for arg_node in node.args:
+            self.visit(arg_node, symbol_table)
         
+        # Call built-in-function
         function_name = function_def.name
-        if function_name == 'printi':
+        if function_name == 'print_i':
             gen_print_int(self.asm_text)
-        elif function_name == 'printc':
+        elif function_name == 'print_c':
             gen_print_char(self.asm_text)
-        elif function_name == 'prints':
+        elif function_name == 'print_s':
             gen_print_string(self.asm_text)
-        
+        else:
+            print(function_name)
+            for statement in function_def.statements:
+                self.visit(statement, symbol_table)

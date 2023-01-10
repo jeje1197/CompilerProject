@@ -10,10 +10,11 @@ class Metadata:
         return self.metadata
 
 class FunctionDefinition:
-    def __init__(self, name, args_w_types, return_type) -> None:
+    def __init__(self, name, args_w_types, return_type, statements=None) -> None:
         self.name = name
         self.args_w_types = args_w_types
         self.return_type = return_type
+        self.statements = statements
 
 class StructDefinition:
     def __init__(self, name) -> None:

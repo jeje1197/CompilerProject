@@ -2,6 +2,7 @@ class SymbolTable:
     def __init__(self, parent=None) -> None:
         self.symbols = dict()
         self.parent = parent
+        self.num_variables = 0
 
     def begin_scope(self, asm_text: list[str]):
         asm_text.extend([
@@ -18,10 +19,10 @@ class SymbolTable:
         ])
 
     def get_num_variables(self):
-        return len(self.symbols)
+        return self.num_variables - 3
 
     def get_variable_offset(self):
-        return len(self.symbols) * 4
+        return self.get_num_variables() * 4
 
     def contains_local(self, key):
         return key in self.symbols
@@ -36,6 +37,8 @@ class SymbolTable:
         return False
 
     def set_local(self, key, value):
+        if not key in self.symbols:
+            self.num_variables += 1
         self.symbols[key] = value
 
     def set_in_lowest_scope(self, key, value):

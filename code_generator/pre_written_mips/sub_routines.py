@@ -168,11 +168,19 @@ mod_int:
 
 print_int_mips = """
 print_int:
+	# Store ret addr on top of args on stack
+	# Stack (a, ra)
+	sw $a0, 0($sp)
+	addiu $sp, $sp, -4
+
 	# Print integer from top of stack
 	li $v0, 1
-    lw $a0, 4($sp)
-	addiu $sp, $sp, 4
+    lw $a0, 8($sp)
     syscall
+
+	# Pop ret addr into reg $t0
+	lw $t0, 4($sp)
+	addiu $sp, $sp, 8
 
 	# Jump to ret addr
 	jr $t0
@@ -180,10 +188,19 @@ print_int:
 print_char_mips = """
 print_char:
 	# Print character from top of stack
+	# Store ret addr on top of args on stack
+	# Stack (a, ra)
+	sw $a0, 0($sp)
+	addiu $sp, $sp, -4
+
+	# Print char from top of stack
 	li $v0, 11
-    lw $a0, 4($sp)
-	addiu $sp, $sp, 4
+    lw $a0, 8($sp)
     syscall
+
+	# Pop ret addr into reg $t0
+	lw $t0, 4($sp)
+	addiu $sp, $sp, 8
 
 	# Jump to ret addr
 	jr $t0
@@ -192,10 +209,19 @@ print_char:
 print_string_mips = """
 print_string:
 	# Print string from address on top of stack
-	li $v0, 11
-    lw $a0, 4($sp)
-	addiu $sp, $sp, 4
+	# Store ret addr on top of args on stack
+	# Stack (a, ra)
+	sw $a0, 0($sp)
+	addiu $sp, $sp, -4
+
+	# Print string from address on top of stack
+	li $v0, 4
+    lw $a0, 8($sp)
     syscall
+
+	# Pop ret addr into reg $t0
+	lw $t0, 4($sp)
+	addiu $sp, $sp, 8
 
 	# Jump to ret addr
 	jr $t0
